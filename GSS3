@@ -1,0 +1,118 @@
+/* Author : Parvez
+   TAGS   : SEGMENT TREE
+*/
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+struct _node {
+	int m;
+	int lr;
+	int rr;
+	int ran;
+};
+
+typedef struct _node node;
+node T[(int)1e6+100];
+int a[(int)1e6+100];
+
+void modify(int no, int x, int val, int l, int r)
+{
+	if (l == r && x == l) {
+		T[no].m = T[no].lr = T[no].rr = T[no].ran = val;
+		return;
+	}
+
+	if (l > r) {
+		return;
+	}
+
+	int mid = (l + r) / 2;
+	int l2 = no * 2;
+	int r2 = l2 + 1;
+	if (x <= mid) {
+		modify(no * 2, x, val, l, mid);
+	} else {
+		modify(no * 2 + 1, x, val, mid + 1, r);
+	}
+	T[no].m = max(max(T[l2].m, T[r2].m), T[l2].rr + T[r2].lr);
+	T[no].lr = max(T[l2].lr, T[l2].ran + T[r2].lr);
+	T[no].rr = max(T[r2].rr, T[r2].ran + T[l2].rr);
+	T[no].ran = T[l2].ran + T[r2].ran;
+}
+
+void build(int no, int left, int right)
+{
+	if (left > right) {
+		return;
+	}
+	if (left == right) {
+		T[no].m = T[no].lr = T[no].rr = T[no].ran = a[left];
+		return;
+	}
+
+	int l = no * 2;
+	int r = l + 1;
+	int mid = (left + right) / 2;
+	build(l, left, mid);
+	build(r, mid + 1, right);
+
+	T[no].m = max(max(T[l].m, T[r].m), T[l].rr + T[r].lr);
+	T[no].lr = max(T[l].lr, T[l].ran + T[r].lr);
+	T[no].rr = max(T[r].rr, T[r].ran + T[l].rr);
+	T[no].ran = T[l].ran + T[r].ran;
+}
+
+node query(int no, int l, int r, int left, int right)
+{
+	if (r < left || l > right || left > right || l > r) {
+		node p;
+		p.m = p.lr = p.rr = p.ran = 0;
+		return p;
+	}
+	if (l == left && r == right) {
+		return T[no];
+	}
+
+	int mid = (left + right) / 2;
+	if (r <= mid) {
+		return query(no * 2, l, r, left, mid);
+	} else if (l > mid) {
+		return query(no * 2 + 1, l, r, mid + 1, right);
+	}
+
+	node p1 = query(no * 2, l, mid, left, mid);
+	node p2 = query(no * 2 + 1, mid + 1, r, mid + 1, right);
+
+	node p;
+	p.m = max(max(p1.m, p2.m), p1.rr + p2.lr);
+	p.lr = max(p1.lr, p1.ran + p2.lr);
+	p.rr = max(p2.rr, p2.ran + p1.rr);
+	p.ran = p1.ran + p2.ran;
+
+	return p;
+}
+
+int main()
+{
+	int n, q;
+	scanf("%d", &n);
+	for (int i = 1; i <= n; i++) {
+		scanf("%d", &a[i]);
+	}
+	build(1, 1, n);
+
+	scanf("%d", &q);
+	while (q--) {
+		int l, r, o;
+		scanf("%d%d%d", &o, &l, &r);
+		if (o == 1) {
+			printf("%d\n", query(1, l, r, 1, n).m);
+		} else {
+			modify(1, l, r, 1, n);
+		}
+	}
+
+	return 0;
+}
